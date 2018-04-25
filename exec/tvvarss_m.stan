@@ -1,31 +1,34 @@
 data {
+  // scalars
   int<lower=0> n_year;                      // # years
   int<lower=0> n_site;                      // # sites
   int<lower=0> n_spp;                       // # species
   int<lower=0> n_process;                   // # of total processes
-  int<lower=0> process[n_site+1];           // vec mapping sites -> processes
-  int<lower=0> b_diag[n_spp*n_spp];         // vec of diag indicators: Y/N = 2/1
-  matrix[n_process,n_spp] x0;               // mat of initial states
-  int<lower=0> shared_q[n_spp,n_process+1]; // mat of which sites/spp share proc variances
   int<lower=0> n_q;                         // # proc variances = max(shared_q)
-  int<lower=0> shared_r[n_spp,n_site+1];    // mat of which sites/spp share obs variances
   int<lower=0> n_r;                         // # obs variances = max(shared_r)
-  int<lower=0> shared_u[n_spp,n_process+1]; // matrix of which sites/spp share trends
   int<lower=0> n_u;                         // # trends = max(shared_u)
-  int<lower=0> est_trend;                   // indicator vec of bias in RW: Y/N = 1/0
-  int<lower=0> demean;                      // indicator vec of demean proc: Y/N = 1/0
-  int<lower=0> row_indices[(n_spp*n_spp)];  // vec of row indices
-  int<lower=0> col_indices[(n_spp*n_spp)];  // vec of col indices
   int<lower=0> n_pos;                       // # non-NA values in the data
-  int<lower=0> spp_indices_pos[n_pos];      // vec of species IDs
-  int<lower=0> site_indices_pos[n_pos];     // vec of site:proc IDs
-  int<lower=0> year_indices_pos[n_pos];     // vec of years
-  real y[n_pos];                            // vec of real-valued data
-  int y_int[n_pos];                         // vec of integer data
-  int family;                               // indicator of which obs distn to use
-  int<lower=0> b_indices[(n_spp*n_spp)];    // vec of indices for B values
-  matrix[4,2] b_limits;                     // matrix of lo/up constraints on B
-  int<lower=0> fit_dynamicB;                // indicator of whether to fit dynamic B
+  int<lower=0> fit_dynamicB;                // indicator of fit dynamic B: Y/N = 1/0
+  int<lower=0> est_trend;                   // indicator of bias in RW: Y/N = 1/0
+  int<lower=0> demean;                      // indicator of demean proc: Y/N = 1/0
+  int family;                               // indicator of distn for obs data
+  // vectors
+  int<lower=0> process[n_site+1];           // map of sites:processes
+  int<lower=0> b_diag[n_spp*n_spp];         // indicators of on-diagonal: Y/N = 2/1
+  int<lower=0> b_indices[(n_spp*n_spp)];    // indices for B values
+  int<lower=0> row_indices[(n_spp*n_spp)];  // row indices for B values
+  int<lower=0> col_indices[(n_spp*n_spp)];  // col indices for B values
+  int<lower=0> spp_indices_pos[n_pos];      // species IDs
+  int<lower=0> site_indices_pos[n_pos];     // site:proc IDs
+  int<lower=0> year_indices_pos[n_pos];     // year IDs
+  real y[n_pos];                            // real-valued data
+  int y_int[n_pos];                         // integer data
+  // matrices
+  int<lower=0> shared_q[n_spp,n_process+1]; // which sites/spp share proc variances
+  int<lower=0> shared_r[n_spp,n_site+1];    // which sites/spp share obs variances
+  int<lower=0> shared_u[n_spp,n_process+1]; // which sites/spp share trends
+  matrix[n_process,n_spp] x0;               // initial states
+  matrix[4,2] b_limits;                     // lo/up constraints on B elements
 }
 parameters {
   vector<lower=0,upper=1>[(n_spp*n_spp)] vecBdev[n_year]; // elements accessed [n_year,n_spp]
@@ -60,9 +63,10 @@ transformed parameters {
   for(s in 1:n_process) {
     pred[s,1,] = x[s,1,]; // states for first year
   }
-  for(i in 1:(n_spp*n_spp)) {
-    vecB[1,i] = vecBdev[1,i]; // first time step, prior in model {}
-  }
+  // for(i in 1:(n_spp*n_spp)) {
+    // vecB[1,i] = vecBdev[1,i]; // first time step, prior in model {}
+  // }
+  vecB[1] = vecBdev[1];
   for(t in 2:n_year) {
     // fill in B matrix, shared across sites
 
