@@ -1,3 +1,10 @@
+functions {
+  \\ mapB: maps b onto [lo,hi]
+  \\ inv_logit(b) = mapB(b, 0, 1)
+  real mapB(real b, real lo, real up) {
+    (up - lo) / (1 + exp(-b)) + lo
+  }
+}
 data {
   // scalars
   int<lower=0> n_year;                      // # years
