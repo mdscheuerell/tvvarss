@@ -1,6 +1,6 @@
 functions {
   \\ mapB: maps b onto [lo,hi]
-  \\ inv_logit(b) = mapB(b, 0, 1)
+  \\ mapB(b, 0, 1) = inverse_logit(b)
   real mapB(real b, real lo, real up) {
     (up - lo) / (1 + exp(-b)) + lo
   }
@@ -38,12 +38,12 @@ data {
   matrix[4,2] b_limits;                     // lo/up constraints on B elements
 }
 parameters {
-  vector[(n_spp*n_spp)] vecBdev[n_year]; // elements accessed [n_year,n_spp]
-  real<lower=0> sigma_rw_pars[2]; // sds for random walk
-  matrix[n_year,n_spp] x[n_process]; // unobserved states
-  real<lower=0> resid_process_sd[n_q]; // residual sds
-  real<lower=0> obs_sd[n_r]; // residual sds
-  real u[n_u]; // trends
+  vector[(n_spp*n_spp)] vecBdev[n_year];    // elements accessed [n_year,n_spp]
+  real<lower=0> sigma_rw_pars[2];           // sds for random walk
+  matrix[n_year,n_spp] x[n_process];        // unobserved states
+  real<lower=0> resid_process_sd[n_q];      // SD of proc errors
+  real<lower=0> obs_sd[n_r];                // SD of obs errors
+  real u[n_u];                              // biases/trends in RW
 }
 transformed parameters {
   vector<lower=0>[(n_spp*n_spp)] sigma_rw;
@@ -79,8 +79,7 @@ transformed parameters {
 
     // estimated interactions
     for(i in 1:(n_spp*n_spp)) {
-      // top down (td) interactions
-      B[t-1,row_indices[i],col_indices[i]] = (b_limits[b_indices[i],2] - b_limits[b_indices[i],1]) * vecB[t-1,i] + b_limits[b_indices[i],1];
+      B[t-1,row_indices[i],col_indices[i]] = mapB(vecB[t-1,i], b_limits[b_indices[i],1], b_limits[b_indices[i],2]);
       // if user wants constant b matrix, vecB[t] = vecB[t-1]
       vecB[t,i] = vecB[t-1,i] + (fit_dynamicB)*vecBdev[t-1,i]; // random walk in b elements
     }
