@@ -21,10 +21,10 @@ data {
   int family;                               // indicator of distn for obs data
   // vectors
   int<lower=0> process[n_site+1];           // map of sites:processes
-  int<lower=0> b_diag[n_spp*n_spp];         // indicators of on-diagonal: Y/N = 2/1
-  int<lower=0> b_indices[(n_spp*n_spp)];    // indices for B values
-  int<lower=0> row_indices[(n_spp*n_spp)];  // row indices for B values
-  int<lower=0> col_indices[(n_spp*n_spp)];  // col indices for B values
+  int<lower=0> b_diag[nspp2];               // indicators of on-diagonal: Y/N = 2/1
+  int<lower=0> b_indices[(nspp2)];          // indices for B values
+  int<lower=0> row_indices[(nspp2)];        // row indices for B values
+  int<lower=0> col_indices[(nspp2)];        // col indices for B values
   int<lower=0> spp_indices_pos[n_pos];      // species IDs
   int<lower=0> site_indices_pos[n_pos];     // site:proc IDs
   int<lower=0> year_indices_pos[n_pos];     // year IDs
@@ -37,8 +37,12 @@ data {
   matrix[n_process,n_spp] x0;               // initial states
   matrix[4,2] b_limits;                     // lo/up constraints on B elements
 }
+transformed data {
+  int<lower=0> n_spp2;
+  n_spp2 = n_spp * n_spp;
+}
 parameters {
-  vector[(n_spp*n_spp)] vecBdev[n_year];    // elements accessed [n_year,n_spp]
+  vector[(nspp2)] vecBdev[n_year];    // elements accessed [n_year,n_spp]
   real<lower=0> sigma_rw_pars[2];           // sds for random walk
   matrix[n_year,n_spp] x[n_process];        // unobserved states
   real<lower=0> resid_process_sd[n_q];      // SD of proc errors
@@ -46,15 +50,15 @@ parameters {
   real u[n_u];                              // biases/trends in RW
 }
 transformed parameters {
-  vector<lower=0>[(n_spp*n_spp)] sigma_rw;
+  vector<lower=0>[(nspp2)] sigma_rw;
   matrix<lower=0>[n_spp, n_process] resid_process_mat;
   matrix<lower=0>[n_spp, n_site] obs_mat;
-  vector<lower=-20,upper=20>[(n_spp*n_spp)] vecB[n_year];
+  vector<lower=-20,upper=20>[(nspp2)] vecB[n_year];
   matrix[n_spp, n_process] u_mat;
   matrix[n_spp,n_spp] B[(n_year-1)]; // B matrix, accessed as n_year, n_spp, n_spp
   matrix[n_year,n_spp] pred[n_process]; // predicted unobserved states
 
-  for(i in 1:(n_spp*n_spp)) {
+  for(i in 1:(nspp2)) {
     sigma_rw[i] = sigma_rw_pars[b_diag[i]];
   }
   for(i in 1:n_spp) {
@@ -70,7 +74,7 @@ transformed parameters {
   for(s in 1:n_process) {
     pred[s,1,] = x[s,1,]; // states for first year
   }
-  // for(i in 1:(n_spp*n_spp)) {
+  // for(i in 1:(nspp2)) {
     // vecB[1,i] = vecBdev[1,i]; // first time step, prior in model {}
   // }
   vecB[1] = vecBdev[1];
@@ -78,13 +82,13 @@ transformed parameters {
     // fill in B matrix, shared across sites
 
     // estimated interactions
-    for(i in 1:(n_spp*n_spp)) {
+    for(i in 1:(nspp2)) {
       B[t-1,row_indices[i],col_indices[i]] = mapB(vecB[t-1,i], b_limits[b_indices[i],1], b_limits[b_indices[i],2]);
       // if user wants constant b matrix, vecB[t] = vecB[t-1]
       vecB[t,i] = vecB[t-1,i] + (fit_dynamicB)*vecBdev[t-1,i]; // random walk in b elements
     }
 
-    //for(i in 1:(n_spp*n_spp)) {
+    //for(i in 1:(nspp2)) {
     //  B[t-1,row_indices[i],col_indices[i]] = vecB[t-1,i];
     //}
 
