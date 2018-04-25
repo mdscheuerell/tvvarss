@@ -91,10 +91,9 @@ tvvarss <- function(y, de_mean = TRUE, topo = NULL, dynamicB=TRUE, family="gauss
   b_indices = c(B)
   #Bindices = matrix(seq(1,n_spp2),n_spp,n_spp)
 
-  # vector of 0s and 1s indicating whether element of vecB is on diagonal
-  b_diag = rep(0, n_spp2)
-  b_diag[seq(1,n_spp2,by=(n_spp+1))] = 1
-  b_diag = b_diag + 1 # plus 1 because this is index in stan, 1 or 2
+  # vec indicating whether (2) or not (1) element of vecB is on diagonal
+  b_diag = rep(1, n_spp2)
+  b_diag[seq(1,n_spp2,by=(n_spp+1))] = 2
 
   if(is.null(x0)) x0 = y[,1,] # means on initial states,could also be set to 0
   if(length(is.na(x0)) > 0) {
