@@ -31,7 +31,7 @@ data {
   matrix[4,2] b_limits;                     // lo/up constraints on B elements
 }
 parameters {
-  vector<lower=0,upper=1>[(n_spp*n_spp)] vecBdev[n_year]; // elements accessed [n_year,n_spp]
+  vector[(n_spp*n_spp)] vecBdev[n_year]; // elements accessed [n_year,n_spp]
   real<lower=0> sigma_rw_pars[2]; // sds for random walk
   matrix[n_year,n_spp] x[n_process]; // unobserved states
   real<lower=0> resid_process_sd[n_q]; // residual sds
