@@ -10,7 +10,7 @@ data {
   int<lower=0> n_year;                      // # years
   int<lower=0> n_site;                      // # sites
   int<lower=0> n_spp;                       // # species
-  int<lower=0> n_process;                   // # of total processes
+  int<lower=0> n_process;                   // # total processes
   int<lower=0> n_q;                         // # proc variances = max(shared_q)
   int<lower=0> n_r;                         // # obs variances = max(shared_r)
   int<lower=0> n_u;                         // # trends = max(shared_u)
@@ -42,12 +42,12 @@ transformed data {
   n_spp2 = n_spp * n_spp;
 }
 parameters {
-  vector[n_spp2] vecBdev[n_year];           // elements accessed [n_year,n_spp]
-  real<lower=0> sigma_rw_pars[2];           // sds for random walk
-  matrix[n_year,n_spp] x[n_process];        // unobserved states
-  real<lower=0> resid_process_sd[n_q];      // SD of proc errors
-  real<lower=0> obs_sd[n_r];                // SD of obs errors
-  real u[n_u];                              // biases/trends in RW
+  vector<lower=-1,upper=1>[n_spp2] vecBdev[n_year]; // elements accessed [n_year,n_spp]
+  real<lower=0> sigma_rw_pars[2];                   // sds for random walk
+  matrix[n_year,n_spp] x[n_process];                // unobserved states
+  real<lower=0> resid_process_sd[n_q];              // SD of proc errors
+  real<lower=0> obs_sd[n_r];                        // SD of obs errors
+  real u[n_u];                                      // biases/trends in RW
 }
 transformed parameters {
   vector<lower=0>[n_spp2] sigma_rw;
@@ -83,14 +83,12 @@ transformed parameters {
 
     // estimated interactions
     for(i in 1:n_spp2) {
+      // map b_ij to appropriate prior range
       B[t-1,row_indices[i],col_indices[i]] = mapB(vecB[t-1,i], b_limits[b_indices[i],1], b_limits[b_indices[i],2]);
+      // random walk in b elements
       // if user wants constant b matrix, vecB[t] = vecB[t-1]
-      vecB[t,i] = vecB[t-1,i] + (fit_dynamicB)*vecBdev[t-1,i]; // random walk in b elements
+      vecB[t,i] = vecB[t-1,i] + fit_dynamicB * vecBdev[t-1,i];
     }
-
-    //for(i in 1:n_spp2) {
-    //  B[t-1,row_indices[i],col_indices[i]] = vecB[t-1,i];
-    //}
 
     // do projection to calculate predicted values. modify code depending on whether
     // predictions should be demeaned before projected, and whether or not trend included.
@@ -109,10 +107,8 @@ transformed parameters {
 model {
   sigma_rw_pars[1] ~ student_t(5,0,1);
   sigma_rw_pars[2] ~ student_t(5,0,1);
-  //vecB[1] ~ normal(0, 3); // prior for first state
   for(t in 1:n_year) {
-    //vecB[t] ~ normal(vecB[t-1], sigma_rw); // vectorized random in B
-    vecBdev[t] ~ normal(0, 10); // vectorized random in B // removed (0, sigma_rw)
+    vecBdev[t] ~ normal(0, 1); // vectorized random in B // removed (0, sigma_rw)
   }
   // prior on first time step
   for(site in 1:n_process) {

@@ -139,7 +139,7 @@ tvvarss <- function(y, de_mean = TRUE, topo = NULL, dynamicB=TRUE, family="gauss
   y_int = round(y)
 
   stan_dir = find.package("tvvarss")
-  model = paste0(stan_dir, "/exec/tvvarss.stan")
+  model = paste0(stan_dir, "/exec/tvvarss_m.stan")
 
   fit_dynamicB = as.integer(dynamicB) # convert 0 or 1
 
