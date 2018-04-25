@@ -1,6 +1,6 @@
 functions {
-  \\ mapB: maps b onto [lo,hi]
-  \\ mapB(b, 0, 1) = inverse_logit(b)
+  // mapB: maps b onto [lo,hi]
+  // mapB(b, 0, 1) = inverse_logit(b)
   real mapB(real b, real lo, real up) {
     (up - lo) / (1 + exp(-b)) + lo
   }
