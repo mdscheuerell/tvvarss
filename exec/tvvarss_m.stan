@@ -2,7 +2,9 @@ functions {
   // mapB: maps b onto [lo,hi]
   // mapB(b, 0, 1) = inverse_logit(b)
   real mapB(real b, real lo, real up) {
-    (up - lo) / (1 + exp(-b)) + lo
+    real b_star;
+    b_star = (up - lo) / (1 + exp(-b)) + lo;
+    return b_star;
   }
 }
 data {
@@ -21,10 +23,10 @@ data {
   int family;                               // indicator of distn for obs data
   // vectors
   int<lower=0> process[n_site+1];           // map of sites:processes
-  int<lower=0> b_diag[n_spp2];              // indicators of on-diagonal: Y/N = 2/1
-  int<lower=0> b_indices[n_spp2];           // indices for B values
-  int<lower=0> row_indices[n_spp2];         // row indices for B values
-  int<lower=0> col_indices[n_spp2];         // col indices for B values
+  int<lower=0> b_diag[n_spp*n_spp];         // indicators of on-diagonal: Y/N = 2/1
+  int<lower=0> b_indices[n_spp*n_spp];      // indices for B values
+  int<lower=0> row_indices[n_spp*n_spp];    // row indices for B values
+  int<lower=0> col_indices[n_spp*n_spp];    // col indices for B values
   int<lower=0> spp_indices_pos[n_pos];      // species IDs
   int<lower=0> site_indices_pos[n_pos];     // site:proc IDs
   int<lower=0> year_indices_pos[n_pos];     // year IDs
