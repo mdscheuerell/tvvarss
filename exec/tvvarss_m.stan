@@ -44,15 +44,16 @@ transformed data {
   n_spp2 = n_spp * n_spp;
 }
 parameters {
-  vector<lower=-1,upper=1>[n_spp2] vecBdev[n_year]; // elements accessed [n_year,n_spp]
-  real<lower=0> sigma_rw_pars[2];                   // sds for random walk
+  // vector<lower=-1,upper=1>[n_spp2] vecBdev[n_year]; // elements accessed [n_year,n_spp]
+  vector<lower=-1,upper=1>[n_spp2] vecBdev; // elements accessed [n_year,n_spp]
+  // real<lower=0> sigma_rw_pars[2];                   // sds for random walk
   matrix[n_year,n_spp] x[n_process];                // unobserved states
   real<lower=0> resid_process_sd[n_q];              // SD of proc errors
   real<lower=0> obs_sd[n_r];                        // SD of obs errors
   real u[n_u];                                      // biases/trends in RW
 }
 transformed parameters {
-  vector<lower=0>[n_spp2] sigma_rw;
+  // vector<lower=0>[n_spp2] sigma_rw;
   matrix<lower=0>[n_spp, n_process] resid_process_mat;
   matrix<lower=0>[n_spp, n_site] obs_mat;
   vector<lower=-20,upper=20>[n_spp2] vecB[n_year];
@@ -60,9 +61,9 @@ transformed parameters {
   matrix[n_spp,n_spp] B[(n_year-1)]; // B matrix, accessed as n_year, n_spp, n_spp
   matrix[n_year,n_spp] pred[n_process]; // predicted unobserved states
 
-  for(i in 1:n_spp2) {
-    sigma_rw[i] = sigma_rw_pars[b_diag[i]];
-  }
+  // for(i in 1:n_spp2) {
+  //   sigma_rw[i] = sigma_rw_pars[b_diag[i]];
+  // }
   for(i in 1:n_spp) {
     for(j in 1:n_process) {
       resid_process_mat[i,j] = resid_process_sd[shared_q[i,j]];
@@ -79,7 +80,7 @@ transformed parameters {
   // for(i in 1:n_spp2) {
     // vecB[1,i] = vecBdev[1,i]; // first time step, prior in model {}
   // }
-  vecB[1] = vecBdev[1];
+  vecB[1] = vecBdev;
   for(t in 2:n_year) {
     // fill in B matrix, shared across sites
 
@@ -89,7 +90,8 @@ transformed parameters {
       B[t-1,row_indices[i],col_indices[i]] = mapB(vecB[t-1,i], b_limits[b_indices[i],1], b_limits[b_indices[i],2]);
       // random walk in b elements
       // if user wants constant b matrix, vecB[t] = vecB[t-1]
-      vecB[t,i] = vecB[t-1,i] + fit_dynamicB * vecBdev[t-1,i];
+      // vecB[t,i] = vecB[t-1,i] + fit_dynamicB * vecBdev[t-1,i];
+      vecB[t,i] = vecB[t-1,i];
     }
 
     // do projection to calculate predicted values. modify code depending on whether
@@ -97,48 +99,48 @@ transformed parameters {
     for(s in 1:n_process) {
      if(est_trend == 0) {
       if(demean==0) {pred[s,t,] = x[s,t-1,] * B[t-1,,];}
-      if(demean==1) {pred[s,t,] = (x[s,t-1,]- u_mat[,s]') * B[t-1,,];}
+      if(demean==1) {pred[s,t,] = (x[s,t-1,] - u_mat[,s]') * B[t-1,,];}
      }
      if(est_trend == 1) {
       if(demean==0) {pred[s,t,] = x[s,t-1,] * B[t-1,,] + u_mat[,s]';}
-      if(demean==1) {pred[s,t,] = (x[s,t-1,]-u_mat[,s]') * B[t-1,,] + u_mat[,s]';}
+      if(demean==1) {pred[s,t,] = (x[s,t-1,] - u_mat[,s]') * B[t-1,,] + u_mat[,s]';}
      }
     }
   }
 }
 model {
-  sigma_rw_pars[1] ~ student_t(5,0,1);
-  sigma_rw_pars[2] ~ student_t(5,0,1);
-  for(t in 1:n_year) {
-    vecBdev[t] ~ normal(0, 1); // vectorized random in B // removed (0, sigma_rw)
+  // sigma_rw_pars[1] ~ student_t(5,0,1);
+  // sigma_rw_pars[2] ~ student_t(5,0,1);
+  // for(t in 1:n_year) {
+  //   vecBdev[t] ~ normal(0, 1); // vectorized random in B // removed (0, sigma_rw)
+  // }
+  for(i in 1:n_spp2) {
+      vecBdev[i] ~ normal(0, 10);
   }
-  // prior on first time step
+  // process model
   for(site in 1:n_process) {
     for(spp in 1:n_spp) {
+      // time = 1
       x[site,1,spp] ~ normal(x0[site,spp],1);
+      // time = 2+
+      for(t in 2:n_year) {
+        x[site,t,spp] ~ normal(pred[site,t,spp], resid_process_mat[spp,site]);
+      }
     }
   }
-  // process model for remaining sites
-  for(t in 2:n_year) {
-   for(site in 1:n_process) {
-    for(spp in 1:n_spp) {
-      x[site,t,spp] ~ normal(pred[site,t,spp], resid_process_mat[spp,site]);
-    }
-   }
-  }
-
+  // prior on process standard deviations
   for(i in 1:n_q) {
-    // prior on process standard deviations
     resid_process_sd[i] ~ student_t(5,0,1);
   }
+  // prior on obs standard deviations
   for(i in 1:n_r) {
     obs_sd[i] ~ student_t(5,0,1);
   }
+  // prior on biases/trends
   for(i in 1:n_u) {
-    // prior on trends
     u[i] ~ normal(0,1);
   }
-
+  // observation model
   // gaussian likelihood for now
   for(i in 1:n_pos) {
     if(family==1) y[i] ~ normal(x[site_indices_pos[i],year_indices_pos[i],spp_indices_pos[i]], obs_mat[spp_indices_pos[i],site_indices_pos[i]]);
@@ -150,7 +152,12 @@ model {
 
 }
 generated quantities {
+  vector[n_spp] B_fix;
   vector[n_pos] log_lik;
+  // diag(B_0)
+  for(i in 1:n_spp) {
+    B_fix[i] = B[1,i,i];
+  }
   // for use in loo() package
   if(family==1) for (n in 1:n_pos) log_lik[n] = normal_lpdf(y[n] | x[site_indices_pos[n],year_indices_pos[n],spp_indices_pos[n]], obs_mat[spp_indices_pos[n],site_indices_pos[n]]);
   if(family==2) for (n in 1:n_pos) log_lik[n] = bernoulli_lpmf(y_int[n] | inv_logit(x[site_indices_pos[n],year_indices_pos[n],spp_indices_pos[n]]) );
