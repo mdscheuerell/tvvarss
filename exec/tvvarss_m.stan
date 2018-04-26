@@ -1,5 +1,5 @@
 functions {
-  // mapB: maps b onto [lo,hi]
+  // mapB maps b onto [lo,up]
   // mapB(b, 0, 1) = inverse_logit(b)
   real mapB(real b, real lo, real up) {
     real b_star;
