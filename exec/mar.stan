@@ -12,9 +12,9 @@ data {
   int<lower=0> n_year;                      // # years
   int<lower=0> n_site;                      // # sites
   int<lower=0> n_spp;                       // # species
-  int<lower=0> n_process;                   // # total processes
+  // int<lower=0> n_process;                   // # total processes
   int<lower=0> n_q;                         // # proc variances = max(shared_q)
-  int<lower=0> n_pos;                       // # non-NA values in the data
+  int<lower=0> n_q_c;                       // # covariances in Q
   // vectors
   int<lower=0> b_diag[n_spp*n_spp];         // is this on diag of B: Y/N = 2/1
   int<lower=0> b_indices[n_spp*n_spp];      // indices for B values
@@ -37,19 +37,29 @@ parameters {
   X0[n_spp];                            // initial states
 }
 transformed parameters {
-  cov_matrix[n_spp] Sigma; // covariance matrix
-  // for (m in 1:n_spp) {
-  //   Sigma[m, m] = sigma[m] * sigma[m] * Omega[m, m];
-  // }
-  diagonal(Sigma) = diag_matrix(sigma) * diag_matrix(sigma) * Omega
-  for (i in 1:(n_spp-1)) {
-    for (j in (i+1):n_spp) {
-      Sigma[i, j] = sigma[i] * sigma[j] * Omega[i, j];
-      Sigma[j, i] = Sigma[i, j];
+  if(n_q_c > 0) {
+    cov_matrix[n_spp] Sigma; // covariance matrix
+    // for (m in 1:n_spp) {
+    //   Sigma[m, m] = sigma[m] * sigma[m] * Omega[m, m];
+    // }
+    diagonal(Sigma) = diag_matrix(sigma) * diag_matrix(sigma) * Omega
+    for (i in 1:(n_spp-1)) {
+      for (j in (i+1):n_spp) {
+        Sigma[i, j] = sigma[i] * sigma[j] * Omega[i, j];
+        Sigma[j, i] = Sigma[i, j];
+      }
     }
   }
 }
+      else {
+        Sigma[i, j] = 0
+      }
 model {
-  Omega ~ lkj_corr(2.0); // regularize to unit correlation
-  sigma ~ cauchy(0, 5); // half-Cauchy due to constraint
+  if(n_q_c > 0) {
+    Omega ~ lkj_corr(2.0); // regularize to unit correlation
+    sigma ~ cauchy(0, 5); // half-Cauchy due to constraint
+    for(t in 2:n_year) {
+
+    }
+  }
 }
