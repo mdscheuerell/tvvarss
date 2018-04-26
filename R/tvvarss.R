@@ -171,7 +171,8 @@ tvvarss <- function(y, de_mean = TRUE, topo = NULL, dynamicB=TRUE, family="gauss
     n_process = n_process,
     process = process)
 
-  pars = c("sigma_rw_pars", "resid_process_sd", "obs_sd", "B", "pred")
+#  pars = c("sigma_rw_pars", "resid_process_sd", "obs_sd", "B", "pred")
+  pars = c("resid_process_sd", "obs_sd", "B_fix")
   if(include_trend) pars = c(pars, "u")
 
   mod = rstan::stan(data = datalist, pars = pars,
