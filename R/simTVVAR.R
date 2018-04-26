@@ -192,7 +192,7 @@ simTVVAR <- function(Bt, topo=NULL, TT, var_QX, cov_QX, var_QB, cov_QB = 0,
       BB[,,t][i_cf] <- plogis(qlogis((BB[,,t-1][i_cf] + 1) / 2) + WW_BB[i_cf,t-1]) * 2 - 1
     }
     ## state
-    XX[,t] <- BB[,,t] %*% (XX[,t-1,drop = FALSE] - CC %*% cc[,t-1]) + CC %*% cc[,t] + WW_XX[,t-1]
+    XX[,t] <- BB[,,t-1] %*% (XX[,t-1,drop = FALSE] - CC %*% cc[,t-1]) + CC %*% cc[,t] + WW_XX[,t-1]
   }
   return(list(
     B_mat = BB,
