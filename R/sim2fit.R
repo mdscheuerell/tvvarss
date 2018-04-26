@@ -47,7 +47,7 @@ sim2fit <- function(obj, n_sims, sd=0.1, new_real=TRUE) {
   nR <- nrow(obj$states)
   yy <- array(NA,c(n_sims,nC,nR))
   for(i in 1:n_sims) {
-    if(new_real) {
+    if(i>1 & new_real) {
       yy[i,,] <- t(eval(as.expression(obj$call))$states[,-1]) + matrix(rnorm(nC*nR,0,sd),nC,nR)
     } else {
       yy[i,,] <- t(obj$states[,-1]) + matrix(rnorm(nC*nR,0,sd),nC,nR)
