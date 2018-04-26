@@ -17,13 +17,13 @@ data {
   int<lower=0> n_r;                         // # obs variances = max(shared_r)
   int<lower=0> n_u;                         // # trends = max(shared_u)
   int<lower=0> n_pos;                       // # non-NA values in the data
-  int<lower=0> fit_dynamicB;                // indicator of fit dynamic B: Y/N = 1/0
-  int<lower=0> est_trend;                   // indicator of bias in RW: Y/N = 1/0
-  int<lower=0> demean;                      // indicator of demean proc: Y/N = 1/0
-  int family;                               // indicator of distn for obs data
+  int<lower=0> fit_dynamicB;                // fit dynamic B? Y/N = 1/0
+  int<lower=0> est_trend;                   // bias in RW? Y/N = 1/0
+  int<lower=0> demean;                      // non-zero mean inproc? Y/N = 1/0
+  int family;                               // distn form of obs data
   // vectors
   int<lower=0> process[n_site+1];           // map of sites:processes
-  int<lower=0> b_diag[n_spp*n_spp];         // indicators of on-diagonal: Y/N = 2/1
+  int<lower=0> b_diag[n_spp*n_spp];         // is this on diag of B: Y/N = 2/1
   int<lower=0> b_indices[n_spp*n_spp];      // indices for B values
   int<lower=0> row_indices[n_spp*n_spp];    // row indices for B values
   int<lower=0> col_indices[n_spp*n_spp];    // col indices for B values
